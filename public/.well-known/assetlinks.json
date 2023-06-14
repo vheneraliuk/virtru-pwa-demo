@@ -1,0 +1,6 @@
+[{
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target" : { "namespace": "android_app", "package_name": "app.web.virtru_pwa_demo",
+                     "sha256_cert_fingerprints": ["41:4C:F4:F1:AF:A5:E5:78:39:A0:B7:10:1C:F0:26:99:43:34:4E:0D:CD:48:84:23:1D:74:D8:F7:5F:1E:FF:40"] }
+      }
+]

@@ -1,14 +1,19 @@
 {
   "name": "virtru-demo-pwa",
   "version": "0.1.0",
+  "hostname": "https://virtru-pwa-demo.web.app/",
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.13.5",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
+    "react-scripts": "^5.0.1",
+    "virtru-design-system": "github:virtru-corp/design-system",
     "web-vitals": "^2.1.4",
     "workbox-background-sync": "^6.6.0",
     "workbox-broadcast-update": "^6.6.0",
@@ -24,6 +29,8 @@
     "workbox-streams": "^6.6.0"
   },
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "firebase deploy",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
