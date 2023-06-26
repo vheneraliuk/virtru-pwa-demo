@@ -1,105 +1,194 @@
-import React from "react";
-import { InfoTooltip, Alert, Button, baseTheme } from "virtru-design-system";
+import React, { useState } from "react";
+import { Button } from "virtru-design-system";
 import {
   AppBar,
   Toolbar,
-  Divider,
   Typography,
   Container,
   Stack,
-  ThemeProvider,
+  InputAdornment,
+  TextField,
+  Collapse,
 } from "@mui/material";
 
+import * as Virtru from "virtru-sdk";
+
 function App() {
-  const variants = ["contained", "outlined", "text"];
-  const colors = ["primary", "secondary", "success", "error"];
-  const severities = ["error", "info", "success", "warning"];
+  const [isLoggedIn, setLoggedIn] = useState(false);
+  const [email, setEmail] = useState("");
+  const [targetEmail, setTargetEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [text, setText] = useState(
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+  );
+  const [sendCodeDisabled, setSendCodeDisabled] = useState(false);
+  const [submitCodeDisabled, setSubmitCodeDisabled] = useState(true);
 
-  const [variantIndex, setVariant] = React.useState(0);
-  const [colorIndex, setColor] = React.useState(0);
-  const [severityIndex, setSeverity] = React.useState(0);
-
-  function variantClick() {
-    setVariant(variantIndex === variants.length - 1 ? 0 : variantIndex + 1);
+  function sendCode() {
+    Virtru.Auth.sendCodeToEmail({
+      email: email,
+      // accountsUrl: "https://api.staging.virtru.com/accounts",
+      // acmUrl: "https://api.staging.virtru.com/acm",
+      // apiUrl: "https://api.staging.virtru.com",
+    })
+      .then((result) => {
+        console.debug(`Code Sent - ${result}`);
+        setSendCodeDisabled(true);
+        setSubmitCodeDisabled(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        alert(error);
+      });
   }
 
-  function colorClick() {
-    setColor(colorIndex === colors.length - 1 ? 0 : colorIndex + 1);
+  function submitCode() {
+    Virtru.Auth.activateEmailCode({
+      email: email,
+      code: `V-${code}`,
+      // accountsUrl: "https://api.staging.virtru.com/accounts",
+      // acmUrl: "https://api.staging.virtru.com/acm",
+      // apiUrl: "https://api.staging.virtru.com",
+    })
+      .then((result) => {
+        console.debug(`Activated with code V-${code} - ${result}`);
+        setSubmitCodeDisabled(true);
+        checkLogIn();
+      })
+      .catch((error) => {
+        console.error(error);
+        alert(error);
+      });
   }
-  function alertClick() {
-    setSeverity(
-      severityIndex === severities.length - 1 ? 0 : severityIndex + 1
-    );
+
+  function checkLogIn() {
+    let loggedIn = Virtru.Auth.isLoggedIn({ email: email });
+    setLoggedIn(loggedIn);
+    if (loggedIn) {
+      console.debug(`Successfully logged in as ${email}`);
+    } else {
+      console.debug(`Login FAILED for ${email}`);
+    }
+  }
+
+  function encryptText() {
+    const sourceFileName = `VirtruPwaDemoApp_${Date.now()}.txt`;
+    const policy = new Virtru.PolicyBuilder()
+      .addUsersWithAccess([targetEmail])
+      .build();
+
+    const encryptParams = new Virtru.EncryptParamsBuilder()
+      .withStringSource(text)
+      .withDisplayFilename(sourceFileName)
+      .withPolicy(policy)
+      .build();
+    let client = new Virtru.Client({
+      email: email,
+      // acmEndpoint: "https://api.staging.virtru.com/acm",
+      // auditEndpoint: "https://audit.staging.virtru.com",
+      // easEndpoint: "https://api.staging.virtru.com/accounts",
+      // kasEndpoint: "https://api.staging.virtru.com/kas",
+      // readerUrl: "https://secure.staging.virtru.com/start?htmlProtocol=1",
+      // rcaEndpoint: "https://api.staging.virtru.com/rca",
+      // storageEndpoint: "https://api.staging.virtru.com/encrypted-storage",
+    });
+    client
+      .encrypt(encryptParams)
+      .then((protectedStream) => {
+        let protectedExt = ".tdf.html";
+        const protectedFile = sourceFileName + protectedExt;
+        protectedStream.toFile(protectedFile).then(() => {
+          console.debug(`Encrypted! File - ${protectedFile}`);
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        alert(error);
+      });
   }
 
   return (
-    <ThemeProvider theme={baseTheme}>
+    <div>
       <AppBar position="static">
         <Toolbar>
           <Typography
-            align="start"
+            align="left"
             variant="h6"
             component="div"
             sx={{ flexGrow: 1 }}
           >
-            Virtru PWA Demo
+            Virtru PWA Demo (SDK: {Virtru.Version})
           </Typography>
         </Toolbar>
       </AppBar>
-      <Stack
-        spacing={1}
-        alignItems="center"
-        divider={<Divider orientation="horizontal" flexItem />}
-      >
-        <Container style={{ margin: 15 }} align="center">
-          <Typography
-            align="center"
-            variant="h7"
-            component="div"
-            sx={{ flexGrow: 1 }}
-          >
-            Button variants
-          </Typography>
-          <Button
-            variant={variants[variantIndex]}
-            style={{ marginTop: 10 }}
-            onClick={variantClick}
-          >
-            {variants[variantIndex]}
-          </Button>
-        </Container>
-        <Container style={{ margin: 15 }} align="center">
-          <Typography
-            align="center"
-            variant="h7"
-            component="div"
-            sx={{ flexGrow: 1 }}
-          >
-            Button colors
-          </Typography>
-          <Button
-            color={colors[colorIndex]}
-            style={{ marginTop: 10 }}
-            onClick={colorClick}
-          >
-            {colors[colorIndex]}
-          </Button>
-        </Container>
-        <Container style={{ margin: 15 }} align="center">
-          <Typography
-            align="center"
-            variant="h7"
-            component="div"
-            sx={{ flexGrow: 1 }}
-          >
-            Alert
-          </Typography>
-          <Alert severity={severities[severityIndex]} style={{ margin: 10 }}>
-            This is an alert! Severity is{" "}
-            <strong>{severities[severityIndex]}</strong>
-          </Alert>
-          <Button onClick={alertClick}>Change alert severity</Button>
-        </Container>
+      <Stack spacing={1} alignItems="center">
+        <Collapse in={!isLoggedIn}>
+          <Container style={{ margin: 15 }} align="center">
+            <TextField
+              required
+              disabled={sendCodeDisabled}
+              id="outlined-required"
+              label="Email"
+              onChange={(env) => setEmail(env.target.value)}
+            />
+            <Button
+              disabled={sendCodeDisabled}
+              style={{ margin: 10 }}
+              onClick={sendCode}
+            >
+              Send Code
+            </Button>
+          </Container>
+          <Container style={{ margin: 15 }} align="center">
+            <TextField
+              disabled={submitCodeDisabled}
+              label="Code from Email"
+              InputProps={{
+                inputMode: "numeric",
+                pattern: "[0-9]*",
+                startAdornment: (
+                  <InputAdornment position="start">V -</InputAdornment>
+                ),
+              }}
+              onChange={(env) => setCode(env.target.value)}
+            />
+            <Button
+              disabled={submitCodeDisabled}
+              style={{ margin: 10 }}
+              onClick={submitCode}
+            >
+              Submit
+            </Button>
+          </Container>
+        </Collapse>
+        <Collapse in={isLoggedIn}>
+          <Container style={{ margin: 15 }} align="center">
+            <TextField
+              required
+              fullWidth
+              multiline
+              defaultValue="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+              rows={4}
+              disabled={!isLoggedIn}
+              label="Text to encrypt"
+              onChange={(env) => setText(env.target.value)}
+              style={{ margin: 10 }}
+            />
+            <TextField
+              required
+              disabled={!isLoggedIn}
+              label="Receiver Email"
+              onChange={(env) => setTargetEmail(env.target.value)}
+            />
+            <Button
+              disabled={!isLoggedIn}
+              onClick={encryptText}
+              style={{ margin: 10 }}
+            >
+              Encrypt
+            </Button>
+          </Container>
+        </Collapse>
         <Container style={{ margin: 15 }} align="center">
           <Typography
             style={{ marginBottom: 10 }}
@@ -108,12 +197,11 @@ function App() {
             component="div"
             sx={{ flexGrow: 1 }}
           >
-            Info Tooltip
+            {isLoggedIn ? `Logged in as ${email}` : "You need to login first"}
           </Typography>
-          <InfoTooltip title="Virtru PWA" trigger="click" placement="bottom" />
         </Container>
       </Stack>
-    </ThemeProvider>
+    </div>
   );
 }
 
